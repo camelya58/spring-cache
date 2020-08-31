@@ -37,7 +37,7 @@ dependencies {
 It is necessary to add plugin - ***io.freefair.lombok***, otherwise tests won't see the Lombok libraries as Slf4j.
 
 ## Step 3 
-Create main class and add annotation @EnableCaching.
+Create main class and add annotation ***@EnableCaching***.
 ```java
 @EnableCaching
 @SpringBootApplication
@@ -117,7 +117,7 @@ public class UserServiceImpl implements UserService {
 ```
 
 ## Step 7
-Create method, where you want to place cache and add annotation @Cacheable. You can give it a name.
+Create method, where you want to place cache and add annotation ***@Cacheable***. You can give it a name.
 ```java
     @Override
     @Cacheable("users")
@@ -180,7 +180,7 @@ When test will pass we'll receive following result:
  
  ## Step 10
  If our entity has multiple parameters we can choose which parameter we will use for caching using the annotation 
- @Cacheable(value = "users", key = "#name").
+ ***@Cacheable(value = "users", key = "#name")***.
 ```java
  @Override
     @Cacheable(value = "users", key = "#name")
@@ -227,7 +227,7 @@ Despite the fact that second user has other email he didn't be saved in the repo
 This means that the data was been taken from the cache.
 
 ## Step 12
-Sometimes we want to refresh our values in the cache. The annotation @CachePut allows us to do it.
+Sometimes we want to refresh our values in the cache. The annotation ***@CachePut*** allows us to do it.
 
 Create several methods in ServiceImpl.
 ```java
@@ -289,7 +289,7 @@ That's why we saved only 2 users in our database.
 
 ## Step 14
 In case when you have the instance in a cache, but it has already been deleted in database you must use the annotation
-@CacheEvict that allows to update your cache and delete an instance from the database and the cache at the same time.  
+***@CacheEvict*** that allows to update your cache and delete an instance from the database and the cache at the same time.  
 
 ```java
 @Override
@@ -338,7 +338,7 @@ We will receive the following result:
 User not found by id 2
 javax.persistence.EntityNotFoundException: User not found by id 2
 ```
-We've got an EntityNotFoundException in case, when we had deleted user2 using the method "deleteAndEvict", because
+We've got an *EntityNotFoundException* in case, when we had deleted user2 using the method "deleteAndEvict", because
 it is no longer in the cache.
 
 ## Step 16
@@ -363,9 +363,9 @@ Sometimes you need to group multiple settings. In this case use the following sy
 ```
 
 ## Step 17
-When we add the annotation @EnableCache in our project Spring cache automatically creates a CacheManager.
+When we add the annotation @EnableCache in our project Spring cache automatically creates a ***CacheManager***.
 
-But we can create own CacheManager using ConcurrentMapCacheManager and overriding the method "createConcurrentMapCache".
+But we can create own CacheManager using *ConcurrentMapCacheManager* and overriding the method "createConcurrentMapCache".
 
 We use CacheBuilder of Guava to configure following methods:
 
