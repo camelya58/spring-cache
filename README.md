@@ -288,6 +288,8 @@ And user4 has the same result as user2.
 That's why we saved only 2 users in our database.
 
 ## Step 14
+In case when you have the instance in a cache, but it has already been deleted in database you must use the annotation
+@CacheEvict that allows to update your cache and delete an instance from the database and the cache at the same time.  
 
 ```java
 @Override
@@ -303,3 +305,123 @@ That's why we saved only 2 users in our database.
         repository.deleteById(id);
     }
 ```
+
+## Step 15
+Create method in test class to check the difference between 2 "delete" methods.
+```java
+    @Test
+    public void delete() {
+        User user1 = service.create(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user1.getId()));
+
+        User user2 = service.create(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user2.getId()));
+
+        service.delete(user1.getId());
+        service.deleteAndEvict(user2.getId());
+
+        log.info("{}", service.get(user1.getId()));
+        log.info("{}", service.get(user2.getId()));
+    }
+```
+We will receive the following result:
+```
+: getting user by id: 1
+: User(id=1, name=Vasya, email=vasya@mail.ru)
+: getting user by id: 2
+: User(id=2, name=Vasya, email=vasya@mail.ru)
+: deleting user by id: 1
+: deleting user by id: 2
+: User(id=1, name=Vasya, email=vasya@mail.ru)
+: getting user by id: 2
+
+User not found by id 2
+javax.persistence.EntityNotFoundException: User not found by id 2
+```
+We've got an EntityNotFoundException in case, when we had deleted user2 using the method "deleteAndEvict", because
+it is no longer in the cache.
+
+## Step 16
+Sometimes you need to group multiple settings. In this case use the following syntax:
+```java
+ @Caching(
+            cacheable = {
+                    @Cacheable("users"),
+                    @Cacheable("contacts")
+            },
+            put = {
+                    @CachePut("tables"),
+                    @CachePut("chairs"),
+                    @CachePut(value = "meals", key = "#user.email")
+            },
+            evict = {
+                    @CacheEvict(value = "services", key = "#user.name")
+            }
+    )
+    void cacheExample(User user) {
+    }
+```
+
+## Step 17
+When we add the annotation @EnableCache in our project Spring cache automatically creates a CacheManager.
+
+But we can create own CacheManager using ConcurrentMapCacheManager and overriding the method "createConcurrentMapCache".
+
+We use CacheBuilder of Guava to configure following methods:
+
+maximumSize — this method allows to find load balance between database and cache;
+refreshAfterWrite — the time after writing the value to the cache, after which it will be automatically updated;
+expireAfterAccess — the lifetime of the value since the last access to it;
+expireAfterWrite — the lifetime of the value after being written to the cache. 
+
+Add new dependency to build.gradle file:
+```
+implementation 'com.google.guava:guava:29.0-jre'
+```
+```java
+  @Bean("cacheManager")
+    public CacheManager cacheManager() {
+        return new ConcurrentMapCacheManager() {
+            @Override
+            protected Cache createConcurrentMapCache(String name) {
+                return new ConcurrentMapCache(
+                        name,
+                        CacheBuilder.newBuilder()
+                                .expireAfterWrite(1, TimeUnit.SECONDS)
+                                .build().asMap(),
+                        false);
+            }
+        };
+    }
+```
+## Step 18
+Create test.
+```java
+@Test
+    public void checkSettings() throws InterruptedException {
+        User user1 = service.createOrReturnCached(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user1.getId()));
+
+        User user2 = service.createOrReturnCached(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user2.getId()));
+
+        Thread.sleep(1000L);
+        User user3 = service.createOrReturnCached(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user3.getId()));
+    }
+```
+We will receive the following result:
+```
+: creating user: User(id=0, name=Vasya, email=vasya@mail.ru)
+: getting user by id: 1
+: User(id=1, name=Vasya, email=vasya@mail.ru)
+: User(id=1, name=Vasya, email=vasya@mail.ru)
+: creating user: User(id=0, name=Vasya, email=vasya@mail.ru)
+: getting user by id: 2
+: User(id=2, name=Vasya, email=vasya@mail.ru)
+```
+As we can see when we want to create user2 we can't do it, because he has the same name, so we get the info from cache.
+
+After 1 second we create user3 even though he has the same name as user1 and user2, but our cache has already expired.
+
+Source: https://habr.com/ru/post/465667/. 

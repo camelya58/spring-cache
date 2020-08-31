@@ -33,6 +33,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<User> getAll() {
+        return repository.findAll();
+    }
+
+    @Override
     @Cacheable("users")
     public User get(Long id) {
         log.info("getting user by id: {}", id);
@@ -71,10 +76,5 @@ public class UserServiceImpl implements UserService {
     public void deleteAndEvict(Long id) {
         log.info("deleting user by id: {}", id);
         repository.deleteById(id);
-    }
-
-    @Override
-    public List<User> getAll() {
-        return repository.findAll();
     }
 }

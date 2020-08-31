@@ -65,4 +65,32 @@ public class UserServiceTest extends AbstractTest {
         log.info("all entries are below:");
         service.getAll().forEach(u -> log.info("{}", u.toString()));
     }
+
+    @Test
+    public void delete() {
+        User user1 = service.create(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user1.getId()));
+
+        User user2 = service.create(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user2.getId()));
+
+        service.delete(user1.getId());
+        service.deleteAndEvict(user2.getId());
+
+        log.info("{}", service.get(user1.getId()));
+       // log.info("{}", service.get(user2.getId()));
+    }
+
+    @Test
+    public void checkSettings() throws InterruptedException {
+        User user1 = service.createOrReturnCached(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user1.getId()));
+
+        User user2 = service.createOrReturnCached(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user2.getId()));
+
+        Thread.sleep(1000L);
+        User user3 = service.createOrReturnCached(new User("Vasya", "vasya@mail.ru"));
+        log.info("{}", service.get(user3.getId()));
+    }
 }
